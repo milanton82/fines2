@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Автокод Штрафы - Проверка штрафов ГИБДД</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --color-primary: #3b82f6;
+            --color-primary-hover: #2563eb;
+            --color-primary-active: #1d4ed8;
+            --color-success: #22c55e;
+            --color-warning: #f59e0b;
+            --color-danger: #ef4444;
+            --color-gray-light: #f3f4f6;
+            --color-gray-border: #e5e7eb;
+            --color-gray-text: #6b7280;
+            --color-text: #1f2937;
+            --color-bg: #ffffff;
+            --color-info-bg: #eff6ff;
+            --color-info-border: #bfdbfe;
+            --color-success-bg: #f0fdf4;
+            --color-success-border: #bbf7d0;
+            --color-warning-bg: #fffbeb;
+            --color-warning-border: #fef08a;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: var(--color-text);
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .card {
+            background: var(--color-bg);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--color-text);
+        }
+
+        input[type="text"],
+        input[type="email"] {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--color-gray-border);
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus,
+        input[type="email"]:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .input-hint {
+            font-size: 12px;
+            color: var(--color-gray-text);
+            margin-top: 4px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: var(--color-primary);
+            color: white;
+            flex: 1;
+        }
+
+        .btn-primary:hover {
+            background: var(--color-primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-primary:active {
+            background: var(--color-primary-active);
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: var(--color-gray-light);
+            color: var(--color-text);
+        }
+
+        .btn-secondary:hover {
+            background: #e5e7eb;
+        }
+
+        .fines-list {
+            margin-top: 20px;
+        }
+
+        .fine-item {
+            background: var(--color-gray-light);
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .fine-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .fine-info {
+            flex: 1;
+        }
+
+        .fine-title {
+            font-weight: 600;
+            color: var(--color-text);
+            margin-bottom: 4px;
+        }
+
+        .fine-details {
+            font-size: 12px;
+            color: var(--color-gray-text);
+        }
+
+        .fine-amount {
+            font-weight: 600;
+            color: var(--color-danger);
+            font-size: 18px;
+        }
+
+        .fine-item.new {
+            background: var(--color-info-bg);
+            border: 2px solid var(--color-info-border);
+        }
+
+        .fine-item.new::before {
+            content: "NEW";
+            display: inline-block;
+            background: var(--color-info-border);
+            color: #1e40af;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 700;
+            margin-right: 8px;
+        }
+
+        .alert {
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid;
+        }
+
+        .alert-info {
+            background: var(--color-info-bg);
+            border-color: var(--color-primary);
+            color: #1e40af;
+        }
+
+        .alert-warning {
+            background: var(--color-warning-bg);
+            border-color: var(--color-warning);
+            color: #92400e;
+        }
+
+        .alert-success {
+            background: var(--color-success-bg);
+            border-color: var(--color-success);
+            color: #166534;
+        }
+
+        .total-section {
+            background: var(--color-gray-light);
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border: 2px solid var(--color-gray-border);
+        }
+
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+
+        .total-row.highlight {
+            font-size: 18px;
+            font-weight: 700;
+            border-top: 2px solid var(--color-gray-border);
+            padding-top: 12px;
+            margin-top: 12px;
+            color: var(--color-text);
+        }
+
+        .total-row.highlight .amount {
+            color: var(--color-danger);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            color: var(--color-gray-text);
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid var(--color-gray-border);
+            border-top-color: var(--color-primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            max-width: 600px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .modal-content h2 {
+            font-size: 24px;
+            margin-bottom: 16px;
+            color: var(--color-text);
+        }
+
+        .modal-content p {
+            font-size: 16px;
+            color: var(--color-gray-text);
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .fio-email-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .info-message {
+            font-size: 16px;
+            color: var(--color-gray-text);
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .success-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        @media (max-width: 600px) {
+            .fio-email-group {
+                grid-template-columns: 1fr;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .card {
+                padding: 20px;
+            }
+        }
+
+        .icon {
+            display: inline-block;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚗 Автокод Штрафы</h1>
+            <p>Проверка и оплата штрафов ГИБДД, МАДИ и других органов</p>
+        </header>
+
+        <!-- ЭТАП 1: Поиск -->
+        <div class="card" id="searchCard">
+            <h2>Проверьте штрафы по номеру авто</h2>
+            <div class="form-group">
+                <label for="grz">Номер государственной регистрации</label>
+                <input 
+                    type="text" 
+                    id="grz" 
+                    placeholder="Например: А777АА77" 
+                    maxlength="9"
+                    style="text-transform: uppercase;"
+                >
+                <div class="input-hint">Введите без пробелов в формате: АХХХХСС##</div>
+            </div>
+
+            <div class="button-group">
+                <button class="btn-primary" onclick="searchFines()">
+                    <span class="icon">🔍</span>Поиск штрафов
+                </button>
+            </div>
+        </div>
+
+        <!-- ЭТАП 1.5: Результат поиска (без списка) -->
+        <div class="card hidden" id="resultNoticeCard">
+            <div class="success-icon">✓</div>
+            <h2>Найдены штрафы ГИБДД</h2>
+            
+            <div class="info-message">
+                По номеру <strong id="displayGrz2"></strong> найдены штрафы в базе ГИБДД.
+                <br><br>
+                Для просмотра списка и оплаты введите ФИО и email
+            </div>
+
+            <div class="fio-email-group">
+                <div class="form-group">
+                    <label for="fio">ФИО владельца</label>
+                    <input type="text" id="fio" placeholder="Иван Иванов">
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" placeholder="ivan@example.com">
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button class="btn-primary" onclick="showFinesList()">
+                    <span class="icon">📋</span>Просмотреть список
+                </button>
+                <button class="btn-secondary" onclick="goBack()">
+                    ← Назад
+                </button>
+            </div>
+        </div>
+
+        <!-- ЭТАП 2: Показ списка штрафов -->
+        <div class="card hidden" id="resultsCard">
+            <h2>Ваши штрафы</h2>
+            <p style="color: var(--color-gray-text); margin-bottom: 16px;">
+                ГРЗ: <strong id="displayGrz3"></strong>
+            </p>
+
+            <div class="alert alert-info">
+                <strong>ℹ️ Информация:</strong> Это штрафы из базы ГИБДД. При оплате мы проверим полный реестр (МАДИ, АМПП, ФССП) и если найдутся новые - покажем их.
+            </div>
+
+            <div class="fines-list" id="parserFines"></div>
+
+            <div class="total-section">
+                <div class="total-row">
+                    <span>Выбрано штрафов:</span>
+                    <span id="selectedCount">0</span>
+                </div>
+                <div class="total-row highlight">
+                    <span>К оплате:</span>
+                    <span class="amount" id="totalAmount">0 ₽</span>
+                </div>
+            </div>
+
+            <div class="button-group" style="margin-top: 20px;">
+                <button class="btn-primary" onclick="processPayment()">
+                    <span class="icon">💳</span>Оплатить
+                </button>
+                <button class="btn-secondary" onclick="goBack()">
+                    ← Назад
+                </button>
+            </div>
+        </div>
+
+        <!-- ЭТАП 3: Актуализация -->
+        <div class="card hidden" id="updateCard">
+            <div class="alert alert-warning">
+                <strong>⚠️ Актуализация списка:</strong> <span id="updateMessage"></span>
+            </div>
+
+            <p style="color: var(--color-gray-text); margin-bottom: 20px; font-size: 14px;">
+                Выберите штрафы для оплаты:
+            </p>
+
+            <div class="fines-list" id="updatedFines"></div>
+
+            <div class="total-section">
+                <div class="total-row">
+                    <span>Выбрано штрафов:</span>
+                    <span id="selectedCount2">0</span>
+                </div>
+                <div class="total-row highlight">
+                    <span>К оплате:</span>
+                    <span class="amount" id="totalAmount2">0 ₽</span>
+                </div>
+            </div>
+
+            <div class="button-group" style="margin-top: 20px;">
+                <button class="btn-primary" onclick="finalPayment()">
+                    <span class="icon">💳</span>Оплатить
+                </button>
+                <button class="btn-secondary" onclick="goBack()">
+                    ← Назад
+                </button>
+            </div>
+        </div>
+
+        <!-- ЭТАП 4: Ошибка -->
+        <div class="card hidden" id="errorCard">
+            <div class="alert alert-info">
+                <strong>ℹ️ Информация:</strong> <span id="errorMessage"></span>
+            </div>
+
+            <div class="button-group">
+                <button class="btn-secondary" onclick="goBack()">
+                    ← Вернуться к поиску
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Редирект на А3 -->
+    <div class="modal" id="redirectModal">
+        <div class="modal-content">
+            <h2>⏳ Переход на оплату</h2>
+            <p>Вас перенаправят на страницу оплаты платежной системы А3</p>
+            <div class="loading">
+                <div class="spinner"></div>
+                <span>Загрузка...</span>
+            </div>
+            <p style="margin-top: 20px; font-size: 14px; color: var(--color-gray-text);">
+                После успешной оплаты вы вернётесь в приложение
+            </p>
+        </div>
+    </div>
+
+    <script>
+        const mockData = {
+            'А777АА77': {
+                parser: [
+                    { id: 1, title: 'Превышение скорости', date: '15.12.2025', amount: 1500, article: '12.9ч2 КоАП' },
+                    { id: 2, title: 'Проезд на красный сигнал', date: '10.12.2025', amount: 5000, article: '12.12ч1 КоАП' }
+                ],
+                a3: [
+                    { id: 1, title: 'Превышение скорости', date: '15.12.2025', amount: 1500, article: '12.9ч2 КоАП', source: 'ГИБДД' },
+                    { id: 2, title: 'Проезд на красный сигнал', date: '10.12.2025', amount: 5000, article: '12.12ч1 КоАП', source: 'ГИБДД' }
+                ]
+            },
+            'В555СС55': {
+                parser: [
+                    { id: 1, title: 'Превышение скорости', date: '20.12.2025', amount: 2500, article: '12.9ч2 КоАП' },
+                    { id: 2, title: 'Парковка в неположенном месте', date: '18.12.2025', amount: 2000, article: '12.19ч3 КоАП' }
+                ],
+                a3: [
+                    { id: 1, title: 'Превышение скорости', date: '20.12.2025', amount: 2500, article: '12.9ч2 КоАП', source: 'ГИБДД' },
+                    { id: 2, title: 'Парковка в неположенном месте', date: '18.12.2025', amount: 2000, article: '12.19ч3 КоАП', source: 'ГИБДД' },
+                    { id: 3, title: 'МАДИ - Засор разметки', date: '16.12.2025', amount: 1500, article: 'МАДИ', source: 'МАДИ', isNew: true },
+                    { id: 4, title: 'ФССП - Задолженность', date: '12.12.2025', amount: 3000, article: 'ФССП', source: 'ФССП', isNew: true }
+                ]
+            },
+            'С333ЕЕ33': {
+                parser: [
+                    { id: 1, title: 'Превышение скорости', date: '10.12.2023', amount: 3000, article: '12.9ч2 КоАП' },
+                    { id: 2, title: 'Проезд на красный сигнал', date: '08.12.2025', amount: 5000, article: '12.12ч1 КоАП' },
+                    { id: 3, title: 'Парковка', date: '01.12.2025', amount: 2500, article: '12.19ч3 КоАП' }
+                ],
+                a3: [
+                    { id: 2, title: 'Проезд на красный сигнал', date: '08.12.2025', amount: 5000, article: '12.12ч1 КоАП', source: 'ГИБДД' },
+                    { id: 3, title: 'Парковка', date: '01.12.2025', amount: 2500, article: '12.19ч3 КоАП', source: 'ГИБДД' }
+                ]
+            },
+            'Х999НН99': {
+                parser: [],
+                a3: []
+            }
+        };
+
+        let currentGrz = null;
+        let selectedFines = [];
+        let currentParserData = [];
+
+        function searchFines() {
+            const grz = document.getElementById('grz').value.toUpperCase().trim();
+            
+            if (!grz || grz.length < 8) {
+                alert('Введите корректный номер ГРЗ');
+                return;
+            }
+
+            if (!mockData[grz]) {
+                document.getElementById('errorMessage').textContent = 'Номер не найден в базе. Попробуйте другой номер.';
+                showCard('errorCard');
+                return;
+            }
+
+            currentGrz = grz;
+            const data = mockData[grz];
+
+            if (data.parser.length === 0) {
+                document.getElementById('errorMessage').textContent = 'По этому номеру штрафов не найдено.';
+                showCard('errorCard');
+                return;
+            }
+
+            // Сохраняем данные парсера для дальнейшего использования
+            currentParserData = data.parser;
+            
+            // Показываем уведомление о найденных штрафах
+            document.getElementById('displayGrz2').textContent = currentGrz;
+            showCard('resultNoticeCard');
+        }
+
+        function showFinesList() {
+            if (!document.getElementById('fio').value.trim()) {
+                alert('Введите ФИО');
+                return;
+            }
+            if (!document.getElementById('email').value.trim()) {
+                alert('Введите Email');
+                return;
+            }
+
+            renderParserResults(currentParserData);
+            showCard('resultsCard');
+        }
+
+        function renderParserResults(fines) {
+            const container = document.getElementById('parserFines');
+            container.innerHTML = '';
+            
+            fines.forEach(fine => {
+                const el = document.createElement('div');
+                el.className = 'fine-item';
+                el.innerHTML = `
+                    <input type="checkbox" value="${fine.id}" onchange="updateTotal()">
+                    <div class="fine-info">
+                        <div class="fine-title">${fine.title}</div>
+                        <div class="fine-details">
+                            ГРЗ: ${currentGrz} | ${fine.date} | ${fine.article}
+                        </div>
+                    </div>
+                    <div class="fine-amount">${fine.amount.toLocaleString()} ₽</div>
+                `;
+                container.appendChild(el);
+            });
+
+            document.getElementById('displayGrz3').textContent = currentGrz;
+            selectedFines = [];
+            updateTotal();
+        }
+
+        function updateTotal() {
+            const checkboxes = document.querySelectorAll('#parserFines input:checked');
+            const count = checkboxes.length;
+            const data = mockData[currentGrz];
+            let total = 0;
+
+            checkboxes.forEach(cb => {
+                const fineId = parseInt(cb.value);
+                const fine = data.parser.find(f => f.id === fineId);
+                if (fine) total += fine.amount;
+            });
+
+            document.getElementById('selectedCount').textContent = count;
+            document.getElementById('totalAmount').textContent = total.toLocaleString() + ' ₽';
+
+            selectedFines = Array.from(checkboxes).map(cb => parseInt(cb.value));
+        }
+
+        function processPayment() {
+            if (selectedFines.length === 0) {
+                alert('Выберите хотя бы один штраф');
+                return;
+            }
+
+            // Имитация загрузки с задержкой
+            document.getElementById('redirectModal').classList.add('active');
+            
+            setTimeout(() => {
+                const data = mockData[currentGrz];
+                
+                // Определяем сценарий
+                const parserIds = data.parser.map(f => f.id).sort();
+                const a3Ids = data.a3.map(f => f.id).sort();
+                
+                const hasNewFines = a3Ids.some(id => !parserIds.includes(id));
+                const hasMissingFines = parserIds.some(id => !a3Ids.includes(id));
+                
+                if (hasNewFines) {
+                    // Сценарий 2: новые штрафы найдены
+                    showUpdateCard(data.a3, 'В процессе оплаты найдены новые штрафы');
+                } else if (hasMissingFines) {
+                    // Сценарий 3: некоторые штрафы удалены (актуализация)
+                    showUpdateCard(data.a3, 'В процессе оплаты актуализировали список штрафов');
+                } else {
+                    // Сценарий 1: штрафы совпадают - прямой редирект
+                    redirectToA3();
+                }
+            }, 2000);
+        }
+
+        function showUpdateCard(fines, message) {
+            document.getElementById('redirectModal').classList.remove('active');
+            document.getElementById('updateMessage').textContent = message;
+            
+            const container = document.getElementById('updatedFines');
+            container.innerHTML = '';
+            
+            let selectedIds = new Set(selectedFines);
+            
+            fines.forEach(fine => {
+                const el = document.createElement('div');
+                const isNew = fine.isNew || false;
+                el.className = 'fine-item' + (isNew ? ' new' : '');
+                el.innerHTML = `
+                    <input type="checkbox" value="${fine.id}" ${selectedIds.has(fine.id) ? 'checked' : ''} onchange="updateTotal2()">
+                    <div class="fine-info">
+                        <div class="fine-title">${fine.title}</div>
+                        <div class="fine-details">
+                            ${fine.source} | ${fine.date} | ${fine.article}
+                        </div>
+                    </div>
+                    <div class="fine-amount">${fine.amount.toLocaleString()} ₽</div>
+                `;
+                container.appendChild(el);
+            });
+
+            showCard('updateCard');
+            updateTotal2();
+        }
+
+        function updateTotal2() {
+            const checkboxes = document.querySelectorAll('#updatedFines input:checked');
+            const count = checkboxes.length;
+            const data = mockData[currentGrz];
+            let total = 0;
+
+            checkboxes.forEach(cb => {
+                const fineId = parseInt(cb.value);
+                const fine = data.a3.find(f => f.id === fineId);
+                if (fine) total += fine.amount;
+            });
+
+            document.getElementById('selectedCount2').textContent = count;
+            document.getElementById('totalAmount2').textContent = total.toLocaleString() + ' ₽';
+
+            selectedFines = Array.from(checkboxes).map(cb => parseInt(cb.value));
+        }
+
+        function finalPayment() {
+            if (selectedFines.length === 0) {
+                alert('Выберите хотя бы один штраф');
+                return;
+            }
+
+            document.getElementById('redirectModal').classList.add('active');
+            setTimeout(() => {
+                redirectToA3();
+            }, 1000);
+        }
+
+        function redirectToA3() {
+            document.getElementById('redirectModal').classList.remove('active');
+            
+            const data = mockData[currentGrz];
+            const selectedTotal = data.a3
+                .filter(f => selectedFines.includes(f.id))
+                .reduce((sum, f) => sum + f.amount, 0);
+
+            const params = new URLSearchParams({
+                grz: currentGrz,
+                fio: document.getElementById('fio').value,
+                email: document.getElementById('email').value,
+                amount: selectedTotal,
+                count: selectedFines.length
+            });
+
+            // Имитация редиректа на А3
+            alert(`✅ Редирект на оплату А3\n\nГРЗ: ${currentGrz}\nСумма: ${selectedTotal.toLocaleString()} ₽\nШтрафов: ${selectedFines.length}\n\nВ реальном приложении здесь было бы перенаправление на платежную систему А3`);
+            
+            goBack();
+        }
+
+        function showCard(cardId) {
+            document.querySelectorAll('[id$="Card"]').forEach(card => {
+                card.classList.add('hidden');
+            });
+            document.getElementById(cardId).classList.remove('hidden');
+        }
+
+        function goBack() {
+            showCard('searchCard');
+            document.getElementById('grz').value = '';
+            document.getElementById('fio').value = '';
+            document.getElementById('email').value = '';
+            selectedFines = [];
+            currentGrz = null;
+            currentParserData = [];
+        }
+
+        // Инициализация
+        showCard('searchCard');
+    </script>
+</body>
+</html>
